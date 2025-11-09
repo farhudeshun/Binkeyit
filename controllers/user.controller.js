@@ -1,4 +1,3 @@
-import { error } from "console";
 import userModel from "../models/user.model.js";
 import bycryptjs from "bcryptjs";
 import sendEmail from "../config/sendEmail.js";
@@ -6,6 +5,7 @@ import verifyEmailTemplate from "../utils/verifyEmailTemplate.js";
 import generateAccessToken from "../utils/generateAccessToken.js";
 import generateRefreshToken from "../utils/generateRefreshToken.js";
 import uploadImageCloudinary from "../utils/uploadImageCloudinary.js";
+import generatedOtp from "../utils/generatedOtp.js";
 
 export async function registerUserController(request, response) {
   try {
@@ -212,6 +212,79 @@ export async function uploadAvatar(request, response) {
         _id: userId,
         avatar: upload.url,
       },
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+}
+
+export async function updateUserDetails(request, response) {
+  try {
+    const userId = request.userId;
+    const { name, email, mobile, password } = request.body;
+
+    let hashPassword = "";
+
+    if (password) {
+      const salt = await bycryptjs.genSalt(10);
+      hashPassword = await bycryptjs.hash(password, salt);
+    }
+
+    const updateUser = await userModel.updateOne(
+      { _id: userId },
+      {
+        ...(name && { name: name }),
+        ...(email && { email: email }),
+        ...(mobile && { mobile: mobile }),
+        ...(password && { password: hashPassword }),
+      }
+    );
+
+    return response.json({
+      message: "updated user successfully",
+      error: false,
+      success: true,
+      data: updateUser,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+}
+
+export async function forgotPassword(request, response) {
+  try {
+    const { email } = request.body;
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return response.status(400).json({
+        message: "email not available ",
+        error: true,
+        success: false,
+      });
+    }
+
+    const otp = generatedOtp();
+    const expireTime = new Date() + 60 * 60 * 1000;
+
+    const update = await userModel.findByIdAndUpdate(user._id, {
+      forgot_password_opt: otp,
+      forgot_password_expiry: new Date(expireTime).toISOString(),
+    });
+
+    return response.json({
+      message: "check your email",
+      error: false,
+      success: true,
     });
   } catch (error) {
     return response.status(500).json({
