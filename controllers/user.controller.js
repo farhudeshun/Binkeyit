@@ -324,7 +324,7 @@ export async function verifyForgotPasswordOtp(request, response) {
       });
     }
 
-    const currentTime = new Date();
+    const currentTime = new Date().toISOString();
     if (user.forgot_password_expiry > currentTime) {
       return response.status(400).json({
         message: "OTP is expired",
@@ -343,6 +343,53 @@ export async function verifyForgotPasswordOtp(request, response) {
 
     return response.json({
       message: "verify OTP successful",
+      error: false,
+      success: true,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+}
+
+export async function resetPassword(request, response) {
+  try {
+    const { email, newPassword, confirmPassword } = request.body;
+    if (!email || !newPassword || !confirmPassword) {
+      return response.status(400).json({
+        message: "Provide required fields",
+      });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return response.status(400).json({
+        message: "user not found",
+        error: true,
+        success: false,
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return response.status(400).json({
+        message: "New password and Confirm password are not match",
+        error: true,
+        success: false,
+      });
+    }
+
+    const salt = await bycryptjs.genSalt(10);
+    const hashPassword = await bycryptjs.hash(newPassword, salt);
+
+    const update = await userModel.findByIdAndUpdate(user._id, {
+      password: hashPassword,
+    });
+
+    return response.json({
+      message: "Password updated successfully",
       error: false,
       success: true,
     });
