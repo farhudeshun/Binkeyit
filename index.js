@@ -39,6 +39,6 @@ console.log("MONGODB_URI=" + process.env.MONGODB_URI);
 
 connectDB().then(() => {
   app.listen(PORT, () => {
-    console.log("server is running" + PORT);
+    console.log("server is running " + PORT);
   });
 });

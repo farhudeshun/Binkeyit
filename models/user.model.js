@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema(
         ref: "order",
       },
     ],
-    forgot_password_opt: {
+    forgot_password_otp: {
       type: String,
       default: null,
     },
