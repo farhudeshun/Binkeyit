@@ -8,6 +8,7 @@ import {
   resetPassword,
   updateUserDetails,
   uploadAvatar,
+  userDetails,
   verifyEmailController,
   verifyForgotPasswordOtp,
 } from "../controllers/user.controller.js";
@@ -23,6 +24,7 @@ userRouter.post("/login", loginController);
 userRouter.post("/refresh-token", refreshToken);
 
 userRouter.get("/logout", auth, logoutController);
+userRouter.get("/user-details", auth, userDetails);
 
 userRouter.put("/upload-avatar", auth, upload.single("avatar"), uploadAvatar);
 userRouter.put("/update-user", auth, updateUserDetails);
